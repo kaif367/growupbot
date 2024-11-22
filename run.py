@@ -1,43 +1,39 @@
 import re
+import socket
+import time
 import requests
+import uuid
 from datetime import datetime, timedelta
 from colorama import Fore, Style, init
 
 def display_banner():
     print(Fore.GREEN + """
-=============================================================================
+ ==========================================================================================
+|    █████████  ███████████     ███████   █████   ███   █████    █████  ████████████████    |
+|   ███░░░░░███░░███░░░░░███  ███░░░░░███░░███   ░███  ░░███    ░░███  ░░███░░███░░░░░███   |
+|  ███     ░░░  ░███    ░███ ███     ░░███░███   ░███   ░███     ░███   ░███ ░███    ░███   |
+| ░███          ░██████████ ░███      ░███░███   ░███   ░███     ░███   ░███ ░██████████    | 
+| ░███    █████ ░███░░░░░███░███      ░███░░███  █████  ███      ░███   ░███ ░███░░░░░░     |
+| ░░███  ░░███  ░███    ░███░░███     ███  ░░░█████░█████░       ░███   ░███ ░███           |
+|  ░░█████████  █████   █████░░░███████░     ░░███ ░░███         ░░████████  █████          |
+|   ░░░░░░░░░  ░░░░░   ░░░░░   ░░░░░░░        ░░░   ░░░           ░░░░░░░░  ░░░░░           |        
+ ===========================================================================================
 
-  ██████╗ ██████╗  ██████╗ ██╗    ██╗                                
-██╔════╝ ██╔══██╗██╔═══██╗██║    ██║                                
-██║  ███╗██████╔╝██║   ██║██║ █╗ ██║                                
-██║   ██║██╔══██╗██║   ██║██║███╗██║                                
-╚██████╔╝██║  ██║╚██████╔╝╚███╔███╔╝                                
- ╚═════╝ ╚═╝  ╚═╝ ╚═════╝  ╚══╝╚══╝                                 
-██╗   ██╗██████╗     ███╗   ███╗ ██████╗ ██████╗ ██╗██╗     ███████╗
-██║   ██║██╔══██╗    ████╗ ████║██╔═══██╗██╔══██╗██║██║     ██╔════╝
-██║   ██║██████╔╝    ██╔████╔██║██║   ██║██████╔╝██║██║     █████╗  
-██║   ██║██╔═══╝     ██║╚██╔╝██║██║   ██║██╔══██╗██║██║     ██╔══╝  
-╚██████╔╝██║         ██║ ╚═╝ ██║╚██████╔╝██████╔╝██║███████╗███████╗
- ╚═════╝ ╚═╝         ╚═╝     ╚═╝ ╚═════╝ ╚═════╝ ╚═╝╚══════╝╚══════╝
-                                                                                                                                                                       
-
-============================================================================
-          TELEGRAM : @GROWUPBINARYTRADING
-
- ⚡ SIGNAL GENERATOR TOOL FOR BINARY TRADING ⚡          
-            Powered by GROWUP TRADING 🎯
-            ADMIN TELEGRAM : @KaifSaifi001
-            Telegram Channel : @GrowupBinaryTrading 
-            Bot Telegram Channel : @GrowupBinaryBot
-            Support Team : @Team_GrowUp                    
-                                                             
-          Current Features:                                              
-        - Signal Generation with Advance Strategies       
-        - Interactive Menu                                  
-                                                             
-        ⏱ Use Timezone: UTC +5:30  
-
-============================================================================
+╔══════════════════════════════════════════════════════════════════════════════════════════╗
+          TELEGRAM : @GROWUPBINARYTRADING                                                  
+                                                                                                                                               
+  ⚡ SIGNAL GENERATOR TOOL FOR BINARY TRADING ⚡                                                         
+     Powered by GROWUP TRADING 🎯                                                                                                
+                                                                                                             
+  ⚡ Current Features ⚡                                                                                             
+   - Signal Generation with Advance Strategies                                                     
+   - Blackout Signals + Normal                                                                                               
+   - Advance Filters                                                                                                 
+   - Quotex OTC + Live Stocks                                                               
+   - 100% Real API                                                                                                 
+                                                                                           
+          ⏱ Use Timezone: UTC +5:30
+╚══════════════════════════════════════════════════════════════════════════════════════════╝
 """)
 
 
@@ -135,35 +131,73 @@ def display_pairs():
     for stock, name in stocks_and_indices:
         print(f"{Fore.YELLOW}{stock:<15} {Fore.CYAN}--> {name}")
 
-# Dummy user database
+# Users Dictionary with expiration time
 USERS = {
-    "user1": {"password": "password1", "expire_time": None},
-    "user2": {"password": "password2", "expire_time": None}
+    "A": {
+        "password": "A",
+        "expire_time": datetime(2024, 12, 1, 00, 00)  # Set expiration date/time here
+    },
+    "growupmember": {
+        "password": "trialbot",
+        "expire_time": datetime(2024, 12, 1, 00, 00)
+    }
 }
 
 API_URL = "https://alltradingapi.com/signal_list_gen/qx_signal.js"
 
+# Helper Functions
+def is_connected():
+    """Check if the system is connected to the internet."""
+    try:
+        socket.create_connection(("www.google.com", 80), timeout=5)
+        return True
+    except OSError:
+        return False
+
 def login():
-    print(Fore.CYAN + "\nEnter your login credentials:" + Style.RESET_ALL)
+    """Login function with expiration check."""
     username = input(Fore.YELLOW + "Enter username: " + Style.RESET_ALL).strip()
     password = input(Fore.YELLOW + "Enter password: " + Style.RESET_ALL).strip()
 
     if username in USERS and USERS[username]["password"] == password:
-        USERS[username]["expire_time"] = datetime.now() + timedelta(minutes=30)
-        print(Fore.GREEN + f"Login successful! Session expires at {USERS[username]['expire_time']}" + Style.RESET_ALL)
+        # Check if the user session has expired
+        expire_time = USERS[username]["expire_time"]
+        current_time = datetime.now()
+
+        if current_time > expire_time:
+            print(Fore.RED + "\nYour license has expired. Join @growupbinarytrading for more updates.\n" + Style.RESET_ALL)
+            return None
+
+        print(Fore.GREEN + f"\nWelcome, {username}! Your license is valid until: {expire_time}\n" + Style.RESET_ALL)
         return username
     else:
-        print(Fore.RED + "Invalid username or password." + Style.RESET_ALL)
+        print(Fore.RED + "\nInvalid username or password.\n" + Style.RESET_ALL)
         return None
 
 def check_session(username):
+    """Check if the user's session is still valid."""
+    current_time = datetime.now()
+    expire_time = USERS[username]["expire_time"]
+
+    if current_time > expire_time:
+        print(Fore.RED + "\nYour license has expired. Join @growupbinarytrading for more updates.\n" + Style.RESET_ALL)
+        return False
+    return True
+
+def set_expiration():
+    """Manually set expiration date and time for a user."""
+    username = input(Fore.YELLOW + "Enter username to set expiration: " + Style.RESET_ALL).strip()
     if username in USERS:
-        if datetime.now() > USERS[username]["expire_time"]:
-            print(Fore.RED + "Session expired. Please log in again." + Style.RESET_ALL)
-            return False
-        return True
-    print(Fore.RED + "User not logged in." + Style.RESET_ALL)
-    return False
+        date_str = input(Fore.YELLOW + "Enter expiration date (YYYY-MM-DD): " + Style.RESET_ALL).strip()
+        time_str = input(Fore.YELLOW + "Enter expiration time (HH:MM): " + Style.RESET_ALL).strip()
+        try:
+            expiration = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+            USERS[username]["expire_time"] = expiration
+            print(Fore.GREEN + f"\nExpiration time for {username} set to: {expiration}\n" + Style.RESET_ALL)
+        except ValueError:
+            print(Fore.RED + "\nInvalid date or time format. Please try again.\n" + Style.RESET_ALL)
+    else:
+        print(Fore.RED + "\nUsername not found.\n" + Style.RESET_ALL)
 
 def convert_to_indian_time(signal_time):
     """Converts UTC +6:00 time to Indian Standard Time (IST) which is UTC +5:30"""
@@ -220,6 +254,10 @@ def fetch_signals():
         "separate": separate
     }
 
+    if not is_connected():
+        print(Fore.RED + "\nError: No internet connection. Please check your network and try again." + Style.RESET_ALL)
+        return
+
     try:
         print(Fore.GREEN + "\nFetching signals..." + Style.RESET_ALL)
         response = requests.get(API_URL, params=params)
@@ -261,12 +299,44 @@ def fetch_signals():
             print(Fore.RED + "No signals found in the response." + Style.RESET_ALL)
 
     except requests.exceptions.RequestException as e:
-        print(Fore.RED + f"Error occurred while fetching signals: {e}" + Style.RESET_ALL)
+        print(Fore.RED + f"Error occurred while fetching signals." + Style.RESET_ALL)
+
+# Pastebin raw URL containing allowed MAC addresses
+PASTEBIN_RAW_URL = "https://pastebin.com/raw/V7gEvqRz"
+
+def get_device_mac():
+    """Retrieve the MAC address of the current device."""
+    mac = ':'.join(['{:02x}'.format((uuid.getnode() >> ele) & 0xff) 
+                    for ele in range(0, 8 * 6, 8)][::-1])
+    return mac.upper()
+
+def check_mac_in_pastebin(mac_address):
+    """Check if the MAC address exists in the Pastebin list."""
+    try:
+        response = requests.get(PASTEBIN_RAW_URL)
+        if response.status_code == 200:
+            allowed_macs = response.text.splitlines()
+            if mac_address in allowed_macs:
+                print(Fore.GREEN + f"Device registered: {mac_address}" + Style.RESET_ALL)
+                return True
+            else:
+                print(Fore.RED + "Device not registered. Exiting... Contect @Team_Growup" + Style.RESET_ALL)
+                return False
+        else:
+            raise Exception(f"Failed to fetch MAC list. Status Code: {response.status_code}")
+    except requests.RequestException as e:
+        print(Fore.RED + f"Error connecting to Server" + Style.RESET_ALL)
+        return False
+
 
 # Add the option to display the pairs in your main menu
 def main():
     display_banner()
     username = login()
+    device_mac = get_device_mac()
+    print(Fore.YELLOW + f"Your MAC Address: {device_mac}" + Style.RESET_ALL)
+    if not check_mac_in_pastebin(device_mac):
+        return
 
     if username:
         while True:
@@ -274,7 +344,7 @@ def main():
                 break
 
             print(Fore.GREEN + "\n1. Fetch Signals" + Style.RESET_ALL)
-            print(Fore.GREEN + "2. Show Available Pairs" + Style.RESET_ALL)  # New option to show pairs
+            print(Fore.GREEN + "2. Show Available Pairs" + Style.RESET_ALL)  # Option to show pairs
             print(Fore.GREEN + "3. Logout" + Style.RESET_ALL)
 
             choice = input(Fore.YELLOW + "Enter your choice: " + Style.RESET_ALL).strip()
@@ -285,11 +355,20 @@ def main():
                 # Show currency pairs and stocks separately
                 display_pairs()
             elif choice == "3":
-                print(Fore.GREEN + "Logging out..." + Style.RESET_ALL)
+                print(Fore.GREEN + """
+    ADMIN TELEGRAM       : @KaifSaifi001
+    Telegram Channel     : @GrowupBinaryTrading
+    Bot Telegram Channel : @GrowupBinaryBot
+    Support Team         : @Team_GrowUp
+
+    Logging out in 5 seconds...
+                """ + Style.RESET_ALL)
+                time.sleep(5) #8-secound delay
                 USERS[username]["expire_time"] = None
                 break
             else:
                 print(Fore.RED + "Invalid choice. Please try again." + Style.RESET_ALL)
+
 
 if __name__ == "__main__":
     main()
