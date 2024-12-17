@@ -1,10 +1,29 @@
 import re
+import os
 import socket
 import time
 import requests
-import uuid
 from datetime import datetime, timedelta
 from colorama import Fore, Style, init
+
+# Function to display copyright in the console
+def show_copyright():
+    print("""
+    *************************************************************
+    Copyright © 2024 Growup Binarytrading. All Rights Reserved.
+    This software is protected by copyright law and international treaties.
+    Unauthorized use, reproduction, or distribution of this software is prohibited.
+    For more information Visit 
+    *************************************************************
+    ADMIN TELEGRAM : @KaifSaifi001
+    Telegram Channel : @GrowupBinaryTrading
+    Bot Telegram Channel : @GrowupBinaryBot
+    Support Team : @Team_GrowUp
+    *************************************************************
+    License: MIT License
+    This program is licensed under the MIT License.
+    *************************************************************
+    """)
 
 def display_banner():
     print(Fore.GREEN + """
@@ -123,6 +142,7 @@ def display_pairs():
 
 # Function to display currency pairs and stocks
 def display_pairs():
+
     print(Fore.GREEN + "📈 Available Currency Pairs (OTC):" + Style.RESET_ALL)
     for pair, name in currency_pairs:
         print(f"{Fore.YELLOW}{pair:<15} {Fore.CYAN}--> {name}")
@@ -135,11 +155,11 @@ def display_pairs():
 USERS = {
     "A": {
         "password": "A",
-        "expire_time": datetime(2024, 12, 1, 00, 00)  # Set expiration date/time here
+        "expire_time": datetime(2026, 12, 1, 00, 00)  # Set expiration date/time here
     },
     "growupmember": {
         "password": "trialbot",
-        "expire_time": datetime(2024, 12, 1, 00, 00)
+        "expire_time": datetime(2024, 12, 5, 00, 00)
     }
 }
 
@@ -166,12 +186,15 @@ def login():
 
         if current_time > expire_time:
             print(Fore.RED + "\nYour license has expired. Join @growupbinarytrading for more updates.\n" + Style.RESET_ALL)
+            hit_enter_to_continue()
             return None
 
         print(Fore.GREEN + f"\nWelcome, {username}! Your license is valid until: {expire_time}\n" + Style.RESET_ALL)
+        hit_enter_to_continue()
         return username
     else:
         print(Fore.RED + "\nInvalid username or password.\n" + Style.RESET_ALL)
+        hit_enter_to_continue()  # Wait for user to press Enter
         return None
 
 def check_session(username):
@@ -207,40 +230,43 @@ def convert_to_indian_time(signal_time):
 
 def print_table(signals, api_date):
     """Print the signals in a formatted table"""
-    print(Fore.GREEN + "="*40 + Style.RESET_ALL)
-    print(Fore.CYAN + "╔══════════════✰══════════════╗" + Style.RESET_ALL)
-    print(Fore.YELLOW + f"⏱️ TIMEZONE: UTC +5:30" + Style.RESET_ALL)
-    print(Fore.CYAN + f" 🇮🇳 @Growupbinarytrading" + Style.RESET_ALL)
-    print(Fore.GREEN + f"Date: {api_date}" + Style.RESET_ALL)
-    print(Fore.CYAN + "╚══════════════✰══════════════╝" + Style.RESET_ALL)
-    print(Fore.GREEN + "="*40 + Style.RESET_ALL)
+    print(Fore.GREEN + " ")
+    print(Fore.CYAN + "╔════════✰═══════════╗" + Style.RESET_ALL)
+    print(Fore.YELLOW + f"⏱ TIMEZONE: UTC +5:30" + Style.RESET_ALL)
+    print(Fore.CYAN + f"🇮🇳 @Growupbinarytrading" + Style.RESET_ALL)
+    print(Fore.GREEN + f"  Date: {api_date}" + Style.RESET_ALL)
+    print(Fore.GREEN + f" ‼️ONLY FOR QUOTEX‼️" + Style.RESET_ALL)
+    print(Fore.CYAN + "╚════════✰═══════════╝" + Style.RESET_ALL)
+    print(Fore.GREEN + " ")
 
     # Print the table headers
-    print(Fore.GREEN + "+------------+------------------+--------+" + Style.RESET_ALL)
-    print(f"| {Fore.YELLOW}Forex Pair{Style.RESET_ALL} | {Fore.YELLOW}Future Time{Style.RESET_ALL} | {Fore.YELLOW}Action{Style.RESET_ALL} |")
-    print(Fore.GREEN + "+------------+------------------+--------+" + Style.RESET_ALL)
+    print(Fore.GREEN + "+------------+-------------+-------------+" + Style.RESET_ALL)
+    print(f"| {Fore.YELLOW}Quotex Pair{Style.RESET_ALL} | {Fore.YELLOW}Time{Style.RESET_ALL} | {Fore.YELLOW}Action{Style.RESET_ALL} |")
+    print(Fore.GREEN + "+------------+-------------+-------------+" + Style.RESET_ALL)
 
     # Print the signal data in table format
     for signal in signals:
         pair = signal['pair']
         time = signal['time']
         action = signal['action']
-        color = Fore.RED if action == "CALL" else Fore.GREEN
+        color = Fore.GREEN if action == "CALL" else Fore.RED
 
         print(f"| {pair:<12} | {time} | {color}{action}{Style.RESET_ALL} |")
     
-    print(Fore.GREEN + "+------------+------------------+--------+" + Style.RESET_ALL)
-    print(Fore.GREEN + "="*40 + Style.RESET_ALL)
+    print(Fore.GREEN + "+------------+-------------+-------------+" + Style.RESET_ALL)
+    print(Fore.GREEN + " " + Style.RESET_ALL)
+    print(Fore.RED + "‼️ RULE ‼️ :⚠️ IF ENTRY CANDEL GAPUP OR GAP DOWN TO MUCH THAN DON'T TAKE TRADE. 🚫🚫🚫" + Style.RESET_ALL)
 
 def fetch_signals():
+
     print(Fore.CYAN + "\nEnter signal fetching parameters:" + Style.RESET_ALL)
-    pairs = input(Fore.YELLOW + "Enter pairs (comma-separated, e.g., BRLUSD_otc,USDPKR_otc): " + Style.RESET_ALL).strip() or "BRLUSD_otc,USDPKR_otc"
-    start_time = input(Fore.YELLOW + "Enter start time (HH:MM, e.g., 09:00): " + Style.RESET_ALL).strip() or "09:00"
-    end_time = input(Fore.YELLOW + "Enter end time (HH:MM, e.g., 18:00): " + Style.RESET_ALL).strip() or "18:00"
+    pairs = input(Fore.YELLOW + "Enter pairs (e.g., BRLUSD_otc,USDPKR_otc): " + Style.RESET_ALL).strip() or "BRLUSD_otc,USDPKR_otc"
+    start_time = input(Fore.YELLOW + "Enter start time (e.g., 09:00): " + Style.RESET_ALL).strip() or "09:00"
+    end_time = input(Fore.YELLOW + "Enter end time (e.g., 18:00): " + Style.RESET_ALL).strip() or "18:00"
     days = input(Fore.YELLOW + "Enter number of days (default: 3): " + Style.RESET_ALL).strip() or "3"
-    mode = input(Fore.YELLOW + "Enter mode (blackout/normal, default: blackout): " + Style.RESET_ALL).strip() or "blackout"
-    min_percentage = input(Fore.YELLOW + "Enter minimum percentage (default: 50): " + Style.RESET_ALL).strip() or "50"
-    filter_value = input(Fore.YELLOW + "Enter filter value (1 or 2, default: 1): " + Style.RESET_ALL).strip() or "1"
+    mode = input(Fore.YELLOW + "Enter mode (Blackout/Normal, default: blackout): " + Style.RESET_ALL).strip() or "blackout"
+    min_percentage = input(Fore.YELLOW + "Enter minimum percentage (default: 80): " + Style.RESET_ALL).strip() or "80"
+    filter_value = input(Fore.YELLOW + "Enter filter value (1 Human or 2 Future Trend, default: 1): " + Style.RESET_ALL).strip() or "1"
     separate = input(Fore.YELLOW + "Separate results by trend? (1 for yes, default: 1): " + Style.RESET_ALL).strip() or "1"
 
     params = {
@@ -285,7 +311,7 @@ def fetch_signals():
 
                     if "blackout" in mode.lower():
                         # Blackout mode (No CALL/PUT action)
-                        signals.append({"pair": pair, "time": time_ist, "action": "N/A"})
+                        signals.append({"pair": pair, "time": time_ist, "action": "LAST CANDEL OPP."})
                     else:
                         # Normal mode with CALL/PUT actions
                         action = signal_type.upper() if signal_type else "N/A"
@@ -301,74 +327,52 @@ def fetch_signals():
     except requests.exceptions.RequestException as e:
         print(Fore.RED + f"Error occurred while fetching signals." + Style.RESET_ALL)
 
-# Pastebin raw URL containing allowed MAC addresses
-PASTEBIN_RAW_URL = "https://pastebin.com/raw/V7gEvqRz"
+def clear_screen_except_banner():
+    """Clear the screen but keep the banner intact."""
+    os.system('cls' if os.name == 'nt' else 'clear')
+    display_banner()  # Call the function to display the banner again
 
-def get_device_mac():
-    """Retrieve the MAC address of the current device."""
-    mac = ':'.join(['{:02x}'.format((uuid.getnode() >> ele) & 0xff) 
-                    for ele in range(0, 8 * 6, 8)][::-1])
-    return mac.upper()
+def hit_enter_to_continue():
+    """Prompt user to hit enter to go back to the menu."""
+    input(Fore.CYAN + "\nHIT ENTER TO GO BACK OR CONTINUE..." + Style.RESET_ALL)
 
-def check_mac_in_pastebin(mac_address):
-    """Check if the MAC address exists in the Pastebin list."""
-    try:
-        response = requests.get(PASTEBIN_RAW_URL)
-        if response.status_code == 200:
-            allowed_macs = response.text.splitlines()
-            if mac_address in allowed_macs:
-                print(Fore.GREEN + f"Device registered: {mac_address}" + Style.RESET_ALL)
-                return True
-            else:
-                print(Fore.RED + "Device not registered. Exiting... Contect @Team_Growup" + Style.RESET_ALL)
-                return False
-        else:
-            raise Exception(f"Failed to fetch MAC list. Status Code: {response.status_code}")
-    except requests.RequestException as e:
-        print(Fore.RED + f"Error connecting to Server" + Style.RESET_ALL)
-        return False
-
-
-# Add the option to display the pairs in your main menu
 def main():
-    display_banner()
-    username = login()
-    device_mac = get_device_mac()
-    print(Fore.YELLOW + f"Your MAC Address: {device_mac}" + Style.RESET_ALL)
-    if not check_mac_in_pastebin(device_mac):
-        return
+    while True:
+        clear_screen_except_banner()
+        username = login()
 
-    if username:
-        while True:
-            if not check_session(username):
-                break
+        if username:
+            while True:
+                if not check_session(username):
+                    break
 
-            print(Fore.GREEN + "\n1. Fetch Signals" + Style.RESET_ALL)
-            print(Fore.GREEN + "2. Show Available Pairs" + Style.RESET_ALL)  # Option to show pairs
-            print(Fore.GREEN + "3. Logout" + Style.RESET_ALL)
+                clear_screen_except_banner()
+                print(Fore.GREEN + "\n1. Fetch Signals" + Style.RESET_ALL)
+                print(Fore.GREEN + "2. Show Available Pairs" + Style.RESET_ALL)
+                print(Fore.GREEN + "3. Software Info" + Style.RESET_ALL)  # New option for software info
+                print(Fore.GREEN + "4. Logout" + Style.RESET_ALL)
 
-            choice = input(Fore.YELLOW + "Enter your choice: " + Style.RESET_ALL).strip()
+                choice = input(Fore.YELLOW + "Enter your choice: " + Style.RESET_ALL).strip()
 
-            if choice == "1":
-                fetch_signals()
-            elif choice == "2":
-                # Show currency pairs and stocks separately
-                display_pairs()
-            elif choice == "3":
-                print(Fore.GREEN + """
-    ADMIN TELEGRAM       : @KaifSaifi001
-    Telegram Channel     : @GrowupBinaryTrading
-    Bot Telegram Channel : @GrowupBinaryBot
-    Support Team         : @Team_GrowUp
-
-    Logging out in 5 seconds...
-                """ + Style.RESET_ALL)
-                time.sleep(5) #8-secound delay
-                USERS[username]["expire_time"] = None
-                break
-            else:
-                print(Fore.RED + "Invalid choice. Please try again." + Style.RESET_ALL)
-
+                clear_screen_except_banner()  # Clear the screen before showing any result
+                
+                if choice == "1":
+                    fetch_signals()
+                    hit_enter_to_continue()  # Wait for user to press Enter
+                elif choice == "2":
+                    display_pairs()
+                    hit_enter_to_continue()  # Wait for user to press Enter
+                elif choice == "3":
+                    show_copyright()  # Show software information
+                    hit_enter_to_continue()  # Wait for user to press Enter
+                elif choice == "4":
+                    print(Fore.RED + """ Logging out ...
+                    """ + Style.RESET_ALL)
+                    time.sleep(2)
+                    break
+                else:
+                    print(Fore.RED + "Invalid choice. Please try again." + Style.RESET_ALL)
+                    hit_enter_to_continue()  # Wait for user to press Enter
 
 if __name__ == "__main__":
     main()
