@@ -3,7 +3,6 @@ import os
 import socket
 import time
 import requests
-import uuid
 from datetime import datetime, timedelta
 from colorama import Fore, Style, init
 
@@ -143,6 +142,7 @@ def display_pairs():
 
 # Function to display currency pairs and stocks
 def display_pairs():
+
     print(Fore.GREEN + "📈 Available Currency Pairs (OTC):" + Style.RESET_ALL)
     for pair, name in currency_pairs:
         print(f"{Fore.YELLOW}{pair:<15} {Fore.CYAN}--> {name}")
@@ -155,11 +155,11 @@ def display_pairs():
 USERS = {
     "A": {
         "password": "A",
-        "expire_time": datetime(2050, 12, 1, 00, 00)  # Set expiration date/time here
+        "expire_time": datetime(2026, 12, 1, 00, 00)  # Set expiration date/time here
     },
     "growupmember": {
-        "password": "quotex",
-        "expire_time": datetime(2050, 1, 1, 00, 00)
+        "password": "trialbot",
+        "expire_time": datetime(2024, 12, 5, 00, 00)
     }
 }
 
@@ -176,8 +176,6 @@ def is_connected():
 
 def login():
     """Login function with expiration check."""
-    device_mac = get_device_mac()
-    print(Fore.YELLOW + f"Your MAC Address: {device_mac}" + Style.RESET_ALL)
     username = input(Fore.YELLOW + "Enter username: " + Style.RESET_ALL).strip()
     password = input(Fore.YELLOW + "Enter password: " + Style.RESET_ALL).strip()
 
@@ -313,7 +311,7 @@ def fetch_signals():
 
                     if "blackout" in mode.lower():
                         # Blackout mode (No CALL/PUT action)
-                        signals.append({"pair": pair, "time": time_ist, "action": "N/A"})
+                        signals.append({"pair": pair, "time": time_ist, "action": "LAST CANDEL OPP."})
                     else:
                         # Normal mode with CALL/PUT actions
                         action = signal_type.upper() if signal_type else "N/A"
@@ -329,85 +327,52 @@ def fetch_signals():
     except requests.exceptions.RequestException as e:
         print(Fore.RED + f"Error occurred while fetching signals." + Style.RESET_ALL)
 
-# Pastebin raw URL containing allowed MAC addresses
-PASTEBIN_RAW_URL = "https://pastebin.com/raw/V7gEvqRz"
-
-def get_device_mac():
-    """Retrieve the MAC address of the current device."""
-    mac = ':'.join(['{:02x}'.format((uuid.getnode() >> ele) & 0xff) 
-                    for ele in range(0, 8 * 6, 8)][::-1])
-    return mac.upper()
-
-def check_mac_in_pastebin(mac_address):
-    """Check if the MAC address exists in the Pastebin list."""
-    try:
-        response = requests.get(PASTEBIN_RAW_URL)
-        if response.status_code == 200:
-            allowed_macs = response.text.splitlines()
-            if mac_address in allowed_macs:
-                print(Fore.GREEN + f"Device registered: {mac_address}" + Style.RESET_ALL)
-                return True
-            else:
-                print(Fore.RED + "Device not registered. Exiting... Contect @Team_Growup" + Style.RESET_ALL)
-                return False
-        else:
-            raise Exception(f"Failed to fetch MAC list. Status Code: {response.status_code}")
-    except requests.RequestException as e:
-        print(Fore.RED + f"Error connecting to Server" + Style.RESET_ALL)
-        return False
-
-def hit_enter_to_continue():
-    """Prompt user to hit enter to go back to the menu."""
-    input(Fore.CYAN + "\nHIT ENTER TO GO BACK OR CONTINUE..." + Style.RESET_ALL)
-
 def clear_screen_except_banner():
     """Clear the screen but keep the banner intact."""
     os.system('cls' if os.name == 'nt' else 'clear')
     display_banner()  # Call the function to display the banner again
 
+def hit_enter_to_continue():
+    """Prompt user to hit enter to go back to the menu."""
+    input(Fore.CYAN + "\nHIT ENTER TO GO BACK OR CONTINUE..." + Style.RESET_ALL)
+
 def main():
-    clear_screen_except_banner()
-    username = login()
-    if not username:
-        return  # Exit if login fails
-
-    device_mac = get_device_mac()
-    print(Fore.YELLOW + f"Your MAC Address: {device_mac}" + Style.RESET_ALL)
-    
-    if not check_mac_in_pastebin(device_mac):
-        return  # Exit if MAC address is not valid
-
     while True:
-        if not check_session(username):  # Check if session is valid
-            break  # End the loop if the session is expired
-
         clear_screen_except_banner()
-        print(Fore.GREEN + "\n1. Fetch Signals" + Style.RESET_ALL)
-        print(Fore.GREEN + "2. Show Available Pairs" + Style.RESET_ALL)
-        print(Fore.GREEN + "3. Software Info" + Style.RESET_ALL)
-        print(Fore.GREEN + "4. Logout" + Style.RESET_ALL)
+        username = login()
 
-        choice = input(Fore.YELLOW + "Enter your choice: " + Style.RESET_ALL).strip()
+        if username:
+            while True:
+                if not check_session(username):
+                    break
 
-        clear_screen_except_banner()  # Clear the screen before showing the result
-        
-        if choice == "1":
-            fetch_signals()
-            hit_enter_to_continue()  # Wait for user to press Enter
-        elif choice == "2":
-            display_pairs()
-            hit_enter_to_continue()  # Wait for user to press Enter
-        elif choice == "3":
-            show_copyright()  # Show software information
-            hit_enter_to_continue()  # Wait for user to press Enter
-        elif choice == "4":
-            print(Fore.RED + "Logging out..." + Style.RESET_ALL)
-            time.sleep(2)
-            break  # Exit the menu
-        else:
-            print(Fore.RED + "Invalid choice. Please try again." + Style.RESET_ALL)
-            hit_enter_to_continue()  # Wait for user to press Enter
+                clear_screen_except_banner()
+                print(Fore.GREEN + "\n1. Fetch Signals" + Style.RESET_ALL)
+                print(Fore.GREEN + "2. Show Available Pairs" + Style.RESET_ALL)
+                print(Fore.GREEN + "3. Software Info" + Style.RESET_ALL)  # New option for software info
+                print(Fore.GREEN + "4. Logout" + Style.RESET_ALL)
 
+                choice = input(Fore.YELLOW + "Enter your choice: " + Style.RESET_ALL).strip()
+
+                clear_screen_except_banner()  # Clear the screen before showing any result
+                
+                if choice == "1":
+                    fetch_signals()
+                    hit_enter_to_continue()  # Wait for user to press Enter
+                elif choice == "2":
+                    display_pairs()
+                    hit_enter_to_continue()  # Wait for user to press Enter
+                elif choice == "3":
+                    show_copyright()  # Show software information
+                    hit_enter_to_continue()  # Wait for user to press Enter
+                elif choice == "4":
+                    print(Fore.RED + """ Logging out ...
+                    """ + Style.RESET_ALL)
+                    time.sleep(2)
+                    break
+                else:
+                    print(Fore.RED + "Invalid choice. Please try again." + Style.RESET_ALL)
+                    hit_enter_to_continue()  # Wait for user to press Enter
 
 if __name__ == "__main__":
     main()
